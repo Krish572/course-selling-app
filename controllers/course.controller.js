@@ -1,5 +1,6 @@
 const {cloudinary} = require("../cloudinary");
 const Course = require("../models/course.model")
+const Purchase = require("../models/purchase.model");
 
 async function createCourse(req, res) {
 
@@ -11,7 +12,7 @@ async function createCourse(req, res) {
         }
         const {image} = req.files
         if(!image || Object.keys(req.files).length == 0){
-            res.status(400).json("No files uploaded");
+            res.status(400).json({message: "No files uploaded"});
         }
         const allowedFormat = ["image/png", "image/jpeg"];
         if(!allowedFormat.includes(image.mimetype)){
@@ -61,6 +62,9 @@ async function updateCourse(req, res){
     if(!course){
         return res.status(404).json({message: "Course not found"});
     }
+    if(course.creatorId != req.id){
+        return res.status(401).json({message: "You are not the creator of this course"});
+    }
     if(!req.files.image || Object.keys(req.files).length == 0){
         return res.status(404).json({message: "Image field is required"});
     }
@@ -82,8 +86,50 @@ async function updateCourse(req, res){
     res.status(200).json({message: "Course Updated Successfully"});
 }
 
+async function deleteCourse(req, res){
+    const {id} = req.params;
+    const course = await Course.findById(id);
+    if(!course){
+        return res.status(404).json({message: "Course not found"});
+    }
+    if(course.creatorId != req.id){
+        return res.status(401).json({message: "You are not the Creater of the course"});
+    }
+    try{
+        await Course.findByIdAndDelete(id);
+        res.status(200).json({message: "Course deleted succesfully"});
+    }catch(e){
+        res.status(500).json({message: "Internal Server issue"});
+        console.log(e);
+    }
+}
+
+async function purchaseCourse(req, res){
+    const {id} = req.params;
+    const userId = req.id;
+    try{
+        const course = await Course.findById(id);
+        if(!course){
+            return res.status(404).json({message: "Course not found"});
+        }
+        const purchased = await Purchase.findOne({courseId: id, userId});
+        if(purchased){
+            return res.status(400).json({message: "Already purchased " + course.title});
+        }
+        await Purchase.create({
+            courseId : id,
+            userId
+        })
+        res.status(201).json({message: course.title + " Course purchased succesfully"});
+    }catch(e){
+        res.status(500).json({message: "Internal Server Problem"});
+    }
+}
+
 module.exports = {
     createCourse,
     courses,
-    updateCourse
+    updateCourse,
+    deleteCourse,
+    purchaseCourse
 }

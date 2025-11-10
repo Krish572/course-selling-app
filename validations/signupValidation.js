@@ -7,4 +7,5 @@ const signupSchema = z.object({
         password: z.string().min(8, {message: "Password mush have 6 or more characters"})
     })
 
+
 module.exports = { signupSchema };

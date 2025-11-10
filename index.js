@@ -3,6 +3,7 @@ const express = require("express");
 const fileUpload = require("express-fileupload");
 const AdminRouter = require("./routes/admin.route");
 const CourseRouter = require("./routes/course.route");
+const UserRouter = require("./routes/user.route");
 const mongoose = require("mongoose");
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(fileUpload({
 
 app.use("/api/v1/admin/", AdminRouter);
 app.use("/api/vi/course/", CourseRouter)
+app.use("/api/v1/user/", UserRouter);
 
 
 async function connectDB(){
